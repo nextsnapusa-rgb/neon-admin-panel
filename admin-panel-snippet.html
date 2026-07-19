@@ -1,0 +1,40 @@
+<!-- এডমিন প্যানেলের যেকোনো জায়গায় এই ব্লকটা পেস্ট করুন -->
+<div style="margin:20px 0; padding:15px; border:1px solid #333; border-radius:10px;">
+  <h3>📢 Push Notification পাঠান</h3>
+  <input type="text" id="notif-title" placeholder="Title" style="width:100%; margin-bottom:8px; padding:8px;">
+  <textarea id="notif-message" placeholder="Message" style="width:100%; margin-bottom:8px; padding:8px;"></textarea>
+  <button onclick="sendPushNotification()" id="notif-send-btn">Send Notification</button>
+</div>
+
+<script>
+// এই দুটো নিজের মতো বসিয়ে নিন
+const NETLIFY_FUNCTION_URL = "https://YOUR-SITE-NAME.netlify.app/.netlify/functions/send-notification";
+const ADMIN_SECRET = "neon2026secret"; // Netlify তে যা বসিয়েছেন হুবহু সেটাই
+
+async function sendPushNotification() {
+    const title = document.getElementById('notif-title').value.trim();
+    const message = document.getElementById('notif-message').value.trim();
+    const btn = document.getElementById('notif-send-btn');
+    if (!title || !message) { alert('Title এবং Message দুটোই দিতে হবে'); return; }
+
+    btn.disabled = true; btn.innerText = "Sending...";
+    try {
+        const res = await fetch(NETLIFY_FUNCTION_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, message, secret: ADMIN_SECRET }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(`✅ পাঠানো হয়েছে! ${data.sent} টা ডিভাইসে পৌঁছেছে।`);
+            document.getElementById('notif-title').value = '';
+            document.getElementById('notif-message').value = '';
+        } else {
+            alert('❌ পাঠাতে সমস্যা হয়েছে: ' + (data.error || 'অজানা ত্রুটি'));
+        }
+    } catch (err) {
+        alert('❌ নেটওয়ার্ক সমস্যা: ' + err.message);
+    }
+    btn.disabled = false; btn.innerText = "Send Notification";
+}
+</script>
